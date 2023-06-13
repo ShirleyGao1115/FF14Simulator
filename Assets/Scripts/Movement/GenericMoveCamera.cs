@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Assets.Elenesski.Camera.Utilities {
+namespace Simulator.Movement {
 
     public class GenericMoveCamera : MonoBehaviour {
 
@@ -18,7 +18,7 @@ namespace Assets.Elenesski.Camera.Utilities {
         public bool Operational = true;
 
         [Header("Input Method")]
-        public GenericMoveCameraInputs GetInputs = new GenericMoveCameraInputs();
+        public GenericMoveInputs GetInputs = new GenericMoveInputs();
 
         [Header("Camera")]
         public bool LevelCamera = true;
@@ -114,7 +114,7 @@ namespace Assets.Elenesski.Camera.Utilities {
 
         public void Awake() {
             if ( GetInputs == null )
-                GetInputs = new GenericMoveCameraInputs();
+                GetInputs = new GenericMoveInputs();
 
             _DefaultRotation = gameObject.transform.localRotation.eulerAngles;
 
@@ -190,12 +190,12 @@ namespace Assets.Elenesski.Camera.Utilities {
                     float Y = (Input.mousePosition.y - GetInputs.RotateActionStart.y)/Screen.height*MouseRotationSensitivity;
 
                     _RotateX.SetVelocity(X*MAG*RotationMagnification*_Resolution);
-                    _RotateY.SetVelocity(Y*MAG*RotationMagnification*_Resolution);
+                    // _RotateY.SetVelocity(Y*MAG*RotationMagnification*_Resolution);
 
                 }
 
                 _RotateX.Update();
-                _RotateY.Update();
+                // _RotateY.Update();
             }
 
 
