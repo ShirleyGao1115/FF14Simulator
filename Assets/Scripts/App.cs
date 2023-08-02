@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using Simulator.Movement;
 
+
 public class App : MonoBehaviour
 {
     public static App Instance = null;
 
-    private GenericMoveInputs MoveInputs;
+    public GenericMoveInputs MoveInputs;
 
     void Awake()
     {
@@ -24,6 +25,9 @@ public class App : MonoBehaviour
     void Init()
     {
         Application.targetFrameRate = 60;
+        MoveInputs = new GenericMoveInputs();
+        MoveInputs.Initialize();
+        Instance = this;
     }
     
     // Start is called before the first frame update
@@ -38,3 +42,4 @@ public class App : MonoBehaviour
         
     }
 }
+

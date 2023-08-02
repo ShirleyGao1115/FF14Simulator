@@ -17,8 +17,7 @@ namespace Simulator.Movement {
         [Header("Operational")]
         public bool Operational = true;
 
-        [Header("Input Method")]
-        public GenericMoveInputs GetInputs = new GenericMoveInputs();
+        public GenericMoveInputs GetInputs = App.Instance.MoveInputs;
 
         [Header("Camera")]
         public bool LevelCamera = true;
@@ -46,7 +45,8 @@ namespace Simulator.Movement {
         public float RotateDampenRate = 0.99f;
 
         [Header("Look At")]
-        public GameObject LookAtTarget = null;
+        private GameObject LookAtTarget = null;
+        public GameObject CharacterTarget = null;
         public float MinimumZoom = 20f;
         public float MaximumZoom = 80f;
 
@@ -114,7 +114,7 @@ namespace Simulator.Movement {
 
         public void Awake() {
             if ( GetInputs == null )
-                GetInputs = new GenericMoveInputs();
+                GetInputs = App.Instance.MoveInputs;
 
             _DefaultRotation = gameObject.transform.localRotation.eulerAngles;
 
@@ -122,6 +122,14 @@ namespace Simulator.Movement {
         }
 
         public void Start() {
+            if (CharacterTarget == null)
+            {
+                LookAtTarget = new GameObject();
+                LookAtTarget.transform.parent = CharacterTarget.transform.parent;
+                LookAtTarget.transform.position = CharacterTarget.transform.position;
+            }
+
+
             if (LookAtTarget == null) {
                 _Forward = new Movement(aAmount => gameObject.transform.Translate(Vector3.forward*aAmount), () => ForwardDampenRate);
             } else {
@@ -145,58 +153,58 @@ namespace Simulator.Movement {
 
             Vector3 START_POSITION = gameObject.transform.position;
 
-            if (GetInputs.ResetMovement) {
-                ResetMovement();
-            } else {
+            // if (GetInputs.ResetMovement) {
+            //     ResetMovement();
+            // } else {
 
-                float MAG = (GetInputs.isSlowModifier ? ControlKeyMagnification : 1f)*(GetInputs.isFastModifier ? ShiftKeyMagnification : 1f);
+            //     float MAG = (GetInputs.isSlowModifier ? ControlKeyMagnification : 1f)*(GetInputs.isFastModifier ? ShiftKeyMagnification : 1f);
 
-                if (GetInputs.isPanLeft) {
-                    _PanX.ChangeVelocity(0.01f*MAG*_Resolution*PanLeftRightSensitivity);
-                } else if (GetInputs.isPanRight) {
-                    _PanX.ChangeVelocity(-0.01f*MAG*_Resolution*PanLeftRightSensitivity);
-                }
+            //     if (GetInputs.isPanLeft) {
+            //         _PanX.ChangeVelocity(0.01f*MAG*_Resolution*PanLeftRightSensitivity);
+            //     } else if (GetInputs.isPanRight) {
+            //         _PanX.ChangeVelocity(-0.01f*MAG*_Resolution*PanLeftRightSensitivity);
+            //     }
 
-                if ( _PanX != null )
-                    _PanX.Update();
+            //     if ( _PanX != null )
+            //         _PanX.Update();
 
-                if (GetInputs.isMoveForward ) {
-                    _Forward.ChangeVelocity(0.005f*MAG*_Resolution*MovementSpeedMagnification);
-                } else if (GetInputs.isMoveBackward ) {
-                    _Forward.ChangeVelocity(-0.005f*MAG*_Resolution*MovementSpeedMagnification);
-                }
+            //     if (GetInputs.isMoveForward ) {
+            //         _Forward.ChangeVelocity(0.005f*MAG*_Resolution*MovementSpeedMagnification);
+            //     } else if (GetInputs.isMoveBackward ) {
+            //         _Forward.ChangeVelocity(-0.005f*MAG*_Resolution*MovementSpeedMagnification);
+            //     }
 
-                if (GetInputs.isMoveForwardAlt) {
-                    _Forward.ChangeVelocity(0.005f*MAG*_Resolution*MovementSpeedMagnification*WheelMouseMagnification);
-                } else if (GetInputs.isMoveBackwardAlt) {
-                    _Forward.ChangeVelocity(-0.005f*MAG*_Resolution*MovementSpeedMagnification*WheelMouseMagnification);
-                }
+            //     if (GetInputs.isMoveForwardAlt) {
+            //         _Forward.ChangeVelocity(0.005f*MAG*_Resolution*MovementSpeedMagnification*WheelMouseMagnification);
+            //     } else if (GetInputs.isMoveBackwardAlt) {
+            //         _Forward.ChangeVelocity(-0.005f*MAG*_Resolution*MovementSpeedMagnification*WheelMouseMagnification);
+            //     }
 
-                if (GetInputs.isPanUp) {
-                    _PanY.ChangeVelocity(0.005f*MAG*_Resolution*PanUpDownSensitivity);
-                } else if (GetInputs.isPanDown) {
-                    _PanY.ChangeVelocity(-0.005f*MAG*_Resolution*PanUpDownSensitivity);
-                }
+            //     if (GetInputs.isPanUp) {
+            //         _PanY.ChangeVelocity(0.005f*MAG*_Resolution*PanUpDownSensitivity);
+            //     } else if (GetInputs.isPanDown) {
+            //         _PanY.ChangeVelocity(-0.005f*MAG*_Resolution*PanUpDownSensitivity);
+            //     }
 
-                bool FORWARD_LOCK = GetInputs.isLockForwardMovement && ForwardMovementLockEnabled;
-                _Forward.Update(!FORWARD_LOCK);
+            //     bool FORWARD_LOCK = GetInputs.isLockForwardMovement && ForwardMovementLockEnabled;
+            //     _Forward.Update(!FORWARD_LOCK);
 
-                _PanY.Update();
+            //     _PanY.Update();
 
-                // Pan
-                if (GetInputs.isRotateAction) {
+            //     // Pan
+            //     if (GetInputs.isRotateAction) {
 
-                    float X = (Input.mousePosition.x - GetInputs.RotateActionStart.x)/Screen.width*MouseRotationSensitivity;
-                    float Y = (Input.mousePosition.y - GetInputs.RotateActionStart.y)/Screen.height*MouseRotationSensitivity;
+            //         float X = (Input.mousePosition.x - GetInputs.RotateActionStart.x)/Screen.width*MouseRotationSensitivity;
+            //         float Y = (Input.mousePosition.y - GetInputs.RotateActionStart.y)/Screen.height*MouseRotationSensitivity;
 
-                    _RotateX.SetVelocity(X*MAG*RotationMagnification*_Resolution);
-                    // _RotateY.SetVelocity(Y*MAG*RotationMagnification*_Resolution);
+            //         _RotateX.SetVelocity(X*MAG*RotationMagnification*_Resolution);
+            //         // _RotateY.SetVelocity(Y*MAG*RotationMagnification*_Resolution);
 
-                }
+            //     }
 
-                _RotateX.Update();
-                // _RotateY.Update();
-            }
+            //     _RotateX.Update();
+            //     // _RotateY.Update();
+            // }
 
 
             // Lock at object
