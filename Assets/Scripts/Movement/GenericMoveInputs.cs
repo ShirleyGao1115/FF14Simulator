@@ -5,22 +5,6 @@ using UnityEngine;
 namespace Simulator.Movement {
 
     public class GenericMoveInputs : MonoBehaviour {
-
-        // public bool isSlowModifier;         // Slows the movement down by a factor
-        // public bool isFastModifier;         // Speeds the movement up by a factor
-        // public bool isRotateAction;         // Indicates that the camera is rotating.
-        // public Vector2 RotateActionStart;   // The X,Y position where the right mouse was clicked
-        // public bool isLockForwardMovement;  // Turns of forward dampening while on
-        // public bool ResetMovement;          // Stops all movement
-        // public bool isPanLeft;              // Tells the system to pan left
-        // public bool isPanRight;             // Tells the system to pan right
-        // public bool isPanUp;                // Tells the system to pan up
-        // public bool isPanDown;              // Tells the system to pan down
-        // public bool isMoveForward;          // Moves the camera forward
-        // public bool isMoveBackward;         // Moves the camera backward
-        // public bool isMoveForwardAlt;       // Moves the camera forward (alternate)
-        // public bool isMoveBackwardAlt;      // Moves the camera backward (alternate)
-
         public bool isPlayerMove;  // player move
         public bool isPlayerAutoMove;
         public Vector3 playeMoveDirection;

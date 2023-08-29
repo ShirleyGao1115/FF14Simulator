@@ -17,7 +17,7 @@ namespace Simulator.Movement {
         [Header("Operational")]
         public bool Operational = true;
 
-        public GenericMoveInputs GetInputs = App.Instance.MoveInputs;
+        public GenericMoveInputs GetInputs = App.Instance?.MoveInputs;
 
         [Header("Camera")]
         public bool LevelCamera = true;
