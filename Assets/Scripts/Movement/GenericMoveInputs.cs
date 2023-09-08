@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Simulator.Movement {
 
-    public class GenericMoveInputs : MonoBehaviour {
+    public class GenericMoveInputs {
         public bool isPlayerMove;  // player move
         public bool isPlayerAutoMove;
         public Vector3 playeMoveDirection;
@@ -12,6 +12,9 @@ namespace Simulator.Movement {
         public bool isCameraMove;
         public bool isCameraRotate;
         public bool isCameraUpDown;
+
+        public bool isZoomIn;
+        public bool isZoomOut;
 
         public virtual void Initialize() {
             // RotateActionStart = new Vector2();
@@ -39,15 +42,13 @@ namespace Simulator.Movement {
             // isMoveForward = Input.GetKey(KeyCode.W);
             // isMoveBackward = Input.GetKey(KeyCode.S);
 
-            // isMoveForwardAlt = Input.GetAxis("Mouse ScrollWheel") > 0;
-            // isMoveBackwardAlt = Input.GetAxis("Mouse ScrollWheel") < 0;
+            isZoomIn = Input.GetAxis("Mouse ScrollWheel") > 0;
+            isZoomOut = Input.GetAxis("Mouse ScrollWheel") < 0;
 
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D))
             {
                 isPlayerMove = true;
             }
-
-            
 
         }
 

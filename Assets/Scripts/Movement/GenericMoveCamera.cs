@@ -6,6 +6,14 @@ using UnityEngine;
 namespace Simulator.Movement {
 
     public class GenericMoveCamera : MonoBehaviour {
+        public GenericMoveInputs GetInputs = App.Instance?.MoveInputs;
+        private Camera mCamera;
+        public float MinimumZoom = 10f;
+        public float MaximumZoom = 70f;
+
+        [Header("Look At")]
+        private GameObject LookAtTarget = null;
+        public PlayerUnit CharacterTarget = null;
 
         private Movement _Forward;
         private Movement _PanX;
@@ -17,7 +25,6 @@ namespace Simulator.Movement {
         [Header("Operational")]
         public bool Operational = true;
 
-        public GenericMoveInputs GetInputs = App.Instance?.MoveInputs;
 
         [Header("Camera")]
         public bool LevelCamera = true;
@@ -30,6 +37,7 @@ namespace Simulator.Movement {
         public float WheelMouseMagnification = 5f;
         public float ShiftKeyMagnification = 2f;
         public float ControlKeyMagnification = 0.25f;
+
         public float RotationMagnification = 1f;
 
         [Header("Pan Speed Modifications")]
@@ -44,11 +52,6 @@ namespace Simulator.Movement {
         public float PanningDampenRate = 0.95f;
         public float RotateDampenRate = 0.99f;
 
-        [Header("Look At")]
-        private GameObject LookAtTarget = null;
-        public GameObject CharacterTarget = null;
-        public float MinimumZoom = 20f;
-        public float MaximumZoom = 80f;
 
         [Header("Movement Limits - X")]
         public bool LockX = false;
@@ -113,34 +116,47 @@ namespace Simulator.Movement {
         }
 
         public void Awake() {
-            if ( GetInputs == null )
+            if ( GetInputs == null && App.Instance != null )
                 GetInputs = App.Instance.MoveInputs;
 
             _DefaultRotation = gameObject.transform.localRotation.eulerAngles;
-
-            GetInputs.Initialize();
+            mCamera = this.transform.GetComponent<Camera>();
         }
 
         public void Start() {
+            if ( GetInputs == null && App.Instance != null )
+            {
+                GetInputs = App.Instance.MoveInputs;
+                Debug.Log("Camera Get Inputs Set");
+            }
+
             if (CharacterTarget == null)
             {
-                LookAtTarget = new GameObject();
+                GameObject playerObj = App.Instance.MainPlayer;
+                CharacterTarget = playerObj.GetComponentInChildren<PlayerUnit>();
+            }
+
+            if (LookAtTarget == null)
+            {
+                LookAtTarget = new GameObject("LookAtTarget");
                 LookAtTarget.transform.parent = CharacterTarget.transform.parent;
-                LookAtTarget.transform.position = CharacterTarget.transform.position;
+                Vector3 position = CharacterTarget.transform.position;
+                position.y += CharacterTarget.PlayerHeight;
+                LookAtTarget.transform.position = position;
             }
 
 
-            if (LookAtTarget == null) {
-                _Forward = new Movement(aAmount => gameObject.transform.Translate(Vector3.forward*aAmount), () => ForwardDampenRate);
-            } else {
-                _Forward = new Movement(aAmount => gameObject.GetComponent<UnityEngine.Camera>().fieldOfView += aAmount, () => ForwardDampenRate);
-            }
+            // if (LookAtTarget == null) {
+            //     _Forward = new Movement(aAmount => gameObject.transform.Translate(Vector3.forward*aAmount), () => ForwardDampenRate);
+            // } else {
+            //     _Forward = new Movement(aAmount => gameObject.GetComponent<UnityEngine.Camera>().fieldOfView += aAmount, () => ForwardDampenRate);
+            // }
 
-            _PanX = new Movement(aAmount => gameObject.transform.Translate(Vector3.left*aAmount), () => PanningDampenRate);
-            _PanY = new Movement(aAmount => gameObject.transform.Translate(Vector3.up*aAmount), () => PanningDampenRate);
+            // _PanX = new Movement(aAmount => gameObject.transform.Translate(Vector3.left*aAmount), () => PanningDampenRate);
+            // _PanY = new Movement(aAmount => gameObject.transform.Translate(Vector3.up*aAmount), () => PanningDampenRate);
 
-            _RotateX = new Movement(aAmount => gameObject.transform.Rotate(Vector3.up*aAmount), () => RotateDampenRate);
-            _RotateY = new Movement(aAmount => gameObject.transform.Rotate(Vector3.left*aAmount), () => RotateDampenRate);
+            // _RotateX = new Movement(aAmount => gameObject.transform.Rotate(Vector3.up*aAmount), () => RotateDampenRate);
+            // _RotateY = new Movement(aAmount => gameObject.transform.Rotate(Vector3.left*aAmount), () => RotateDampenRate);
 
         }
 
@@ -150,6 +166,18 @@ namespace Simulator.Movement {
                 return;
 
             GetInputs.QueryInputSystem();
+
+            // zoom
+            if (GetInputs.isZoomIn || GetInputs.isZoomOut)
+            {
+                float deltaZoom = GetInputs.isZoomIn ? -5.0f: 5.0f;
+                float targetFov = mCamera.fieldOfView + deltaZoom;
+                targetFov = Math.Min(MaximumZoom, Math.Max(MinimumZoom, targetFov));
+
+                mCamera.fieldOfView = targetFov;
+            }
+
+            this.transform.LookAt(LookAtTarget.transform);
 
             Vector3 START_POSITION = gameObject.transform.position;
 
@@ -208,58 +236,58 @@ namespace Simulator.Movement {
 
 
             // Lock at object
-            if (LookAtTarget != null ) {
-                transform.LookAt(LookAtTarget.transform);
-                if (gameObject.GetComponent<UnityEngine.Camera>().fieldOfView < MinimumZoom) {
-                    ResetMovement();
-                    gameObject.GetComponent<UnityEngine.Camera>().fieldOfView = MinimumZoom;
-                } else if (gameObject.GetComponent<UnityEngine.Camera>().fieldOfView > MaximumZoom) {
-                    ResetMovement();
-                    gameObject.GetComponent<UnityEngine.Camera>().fieldOfView = MaximumZoom;
-                }
-            }
+            // if (LookAtTarget != null ) {
+            //     transform.LookAt(LookAtTarget.transform);
+            //     if (gameObject.GetComponent<UnityEngine.Camera>().fieldOfView < MinimumZoom) {
+            //         ResetMovement();
+            //         gameObject.GetComponent<UnityEngine.Camera>().fieldOfView = MinimumZoom;
+            //     } else if (gameObject.GetComponent<UnityEngine.Camera>().fieldOfView > MaximumZoom) {
+            //         ResetMovement();
+            //         gameObject.GetComponent<UnityEngine.Camera>().fieldOfView = MaximumZoom;
+            //     }
+            // }
 
             // Set ranges
             Vector3 END_POSITION = transform.position;
 
-            if (LockX)
-                END_POSITION.x = START_POSITION.x;
-            if (LockY)
-                END_POSITION.y = START_POSITION.y;
-            if (LockZ)
-                END_POSITION.z = START_POSITION.z;
+            // if (LockX)
+            //     END_POSITION.x = START_POSITION.x;
+            // if (LockY)
+            //     END_POSITION.y = START_POSITION.y;
+            // if (LockZ)
+            //     END_POSITION.z = START_POSITION.z;
 
-            if (UseXRange && gameObject.transform.position.x < XRangeMin) END_POSITION.x = XRangeMin;
-            if (UseXRange && gameObject.transform.position.x > XRangeMax) END_POSITION.x = XRangeMax;
+            // if (UseXRange && gameObject.transform.position.x < XRangeMin) END_POSITION.x = XRangeMin;
+            // if (UseXRange && gameObject.transform.position.x > XRangeMax) END_POSITION.x = XRangeMax;
 
-            if (UseYRange && gameObject.transform.position.y < YRangeMin) END_POSITION.y = YRangeMin;
-            if (UseYRange && gameObject.transform.position.y > YRangeMax) END_POSITION.y = YRangeMax;
+            // if (UseYRange && gameObject.transform.position.y < YRangeMin) END_POSITION.y = YRangeMin;
+            // if (UseYRange && gameObject.transform.position.y > YRangeMax) END_POSITION.y = YRangeMax;
 
-            if (UseZRange && gameObject.transform.position.z < ZRangeMin) END_POSITION.z = ZRangeMin;
-            if (UseZRange && gameObject.transform.position.z > ZRangeMax) END_POSITION.z = ZRangeMax;
+            // if (UseZRange && gameObject.transform.position.z < ZRangeMin) END_POSITION.z = ZRangeMin;
+            // if (UseZRange && gameObject.transform.position.z > ZRangeMax) END_POSITION.z = ZRangeMax;
 
-            transform.position = END_POSITION;
+            // transform.position = END_POSITION;
 
             // Level Camera
-            if (LevelCamera) {
-                // Fix 1.2
-                // When leveling the camera you want to make sure you don't look straight up or straight down, otherwise the camera rolls wildly.
-                // This code prevents this rolling from occurring.
-                Vector3 ROT = gameObject.transform.rotation.eulerAngles;
-                if (ROT.x > 180)
-                    ROT.x -= 360;
+            // if (LevelCamera) {
+            //     // Fix 1.2
+            //     // When leveling the camera you want to make sure you don't look straight up or straight down, otherwise the camera rolls wildly.
+            //     // This code prevents this rolling from occurring.
+            //     Vector3 ROT = gameObject.transform.rotation.eulerAngles;
+            //     if (ROT.x > 180)
+            //         ROT.x -= 360;
 
-                if (ROT.x > (90-LevelCameraAngleThreshold)) {
-                    ROT.x = (90-LevelCameraAngleThreshold);
-                    gameObject.transform.rotation = Quaternion.Euler(ROT);
-                } else if (ROT.x < (-90+LevelCameraAngleThreshold)) {
-                    ROT.x = -90+LevelCameraAngleThreshold;
-                    gameObject.transform.rotation = Quaternion.Euler(ROT);
+            //     if (ROT.x > (90-LevelCameraAngleThreshold)) {
+            //         ROT.x = (90-LevelCameraAngleThreshold);
+            //         gameObject.transform.rotation = Quaternion.Euler(ROT);
+            //     } else if (ROT.x < (-90+LevelCameraAngleThreshold)) {
+            //         ROT.x = -90+LevelCameraAngleThreshold;
+            //         gameObject.transform.rotation = Quaternion.Euler(ROT);
 
-                }
+            //     }
 
-                LevelTheCamera();
-            }
+            //     LevelTheCamera();
+            // }
 
         }
 
