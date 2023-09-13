@@ -14,6 +14,13 @@ namespace Simulator.Movement {
         [Header("Look At")]
         private GameObject LookAtTarget = null;
         public PlayerUnit CharacterTarget = null;
+        private Vector3 CameraCharacterOffset;
+
+        [SerializeField]
+        private float DeltaY = 0.0f;
+        private float UpDeltaY = 1.0f;
+        private float DownDeltaY = -1.0f;
+        public float SingleDeltaY = 0.2f;
 
         private Movement _Forward;
         private Movement _PanX;
@@ -134,15 +141,14 @@ namespace Simulator.Movement {
             {
                 GameObject playerObj = App.Instance.MainPlayer;
                 CharacterTarget = playerObj.GetComponentInChildren<PlayerUnit>();
+                CameraCharacterOffset = this.transform.position - CharacterTarget.transform.position;
             }
 
             if (LookAtTarget == null)
             {
                 LookAtTarget = new GameObject("LookAtTarget");
                 LookAtTarget.transform.parent = CharacterTarget.transform.parent;
-                Vector3 position = CharacterTarget.transform.position;
-                position.y += CharacterTarget.PlayerHeight;
-                LookAtTarget.transform.position = position;
+                SynchronizeLookAtPosition();
             }
 
 
@@ -158,6 +164,13 @@ namespace Simulator.Movement {
             // _RotateX = new Movement(aAmount => gameObject.transform.Rotate(Vector3.up*aAmount), () => RotateDampenRate);
             // _RotateY = new Movement(aAmount => gameObject.transform.Rotate(Vector3.left*aAmount), () => RotateDampenRate);
 
+        }
+
+        public void SynchronizeLookAtPosition()
+        {
+            Vector3 position = CharacterTarget.transform.position;
+            position.y += CharacterTarget.PlayerHeight + DeltaY;
+            LookAtTarget.transform.position = position;
         }
 
         public void Update() {
@@ -177,6 +190,18 @@ namespace Simulator.Movement {
                 mCamera.fieldOfView = targetFov;
             }
 
+            // camera up down
+            if (GetInputs.cameraUpDownType != CameraUpDownType.None)
+            {
+                float deltaY = DeltaY + (GetInputs.cameraUpDownType == CameraUpDownType.Up ? SingleDeltaY : -1 * SingleDeltaY);
+                DeltaY = Math.Min(UpDeltaY, Math.Max(DownDeltaY, deltaY));
+            }
+
+            // player position sync
+            Vector3 newCameraPos = CharacterTarget.transform.position + CameraCharacterOffset;
+            this.transform.position = newCameraPos;
+
+            SynchronizeLookAtPosition();
             this.transform.LookAt(LookAtTarget.transform);
 
             Vector3 START_POSITION = gameObject.transform.position;

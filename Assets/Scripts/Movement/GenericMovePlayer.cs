@@ -15,6 +15,8 @@ namespace Simulator.Movement
 
         private Transform mTrans;
 
+        public float Speed = 1.0f;
+
         public void  Awake()
         {
             
@@ -26,20 +28,18 @@ namespace Simulator.Movement
             {
                 GetInputs = App.Instance.MoveInputs;
             }
-
-            if (MainCamera == null)
-            {
-                MainCamera = Camera.main;
-            }
             mTrans = this.transform;
         }
 
         // Update is called once per frame
         void Update()
         {
+            GetInputs.QueryInputSystem();
             if (GetInputs != null && GetInputs.isPlayerMove)
             {
                 Debug.Log("is player move");
+                Vector3 position = mTrans.position + GetInputs.playerMoveDirection * Speed;
+                mTrans.position = position;
             }
         }
     }
