@@ -69,18 +69,18 @@ namespace Simulator.Movement {
                     onCameraRotate?.Invoke(mousePos);
                     break;
                 case InputStatus.MouseDoubleDown:
-                    onCameraRotate?.Invoke(mousePos);
                     Vector3 cameraDir = cameraCtrl.getCameraForwardDir();
                     onCharacterMove?.Invoke(new Vector3(cameraDir.x, cameraDir.y, cameraDir.z));
+                    onCameraRotate?.Invoke(mousePos);
                     break;
                 case InputStatus.OnlyCharMove:
                     moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
                     onCharacterMove?.Invoke(moveDir);
                     break;
                 case InputStatus.CharMoveCameraRotate:
-                    onCameraRotate?.Invoke(mousePos);
                     moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
                     onCharacterMove?.Invoke(moveDir);
+                    onCameraRotate?.Invoke(mousePos);
                     break;
                 default:
                     break;
