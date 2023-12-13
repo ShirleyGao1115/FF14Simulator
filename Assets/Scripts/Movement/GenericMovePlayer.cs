@@ -15,6 +15,8 @@ namespace Simulator.Movement
 
         private Transform mTrans;
 
+        private PlayerUnit mPlayerInfo;
+
         public float Speed = 1.0f;
 
         public void  Awake()
@@ -24,24 +26,29 @@ namespace Simulator.Movement
         // Start is called before the first frame update
         void Start()
         {
-            if (GetInputs == null)
-            {
-                GetInputs = App.Instance.MoveInputs;
-            }
-            mTrans = this.transform;
+            // if (GetInputs == null)
+            // {
+            //     GetInputs = App.Instance.MoveInputs;
+            // }
+            // mTrans = this.transform;
+
+            // if (mPlayerInfo == null)
+            // {
+            //     mPlayerInfo = mTrans.GetComponent<PlayerUnit>();
+            // }
         }
 
         // Update is called once per frame
-        void Update()
-        {
-            GetInputs.QueryInputSystem();
-            if (GetInputs != null && GetInputs.isPlayerMove)
-            {
-                Debug.Log("is player move");
-                Vector3 position = mTrans.position + GetInputs.playerMoveDirection * Speed;
-                mTrans.position = position;
-            }
-        }
+        // void Update()
+        // {
+        //     GetInputs.QueryInputSystem();
+        //     if (GetInputs != null && GetInputs.isPlayerMove)
+        //     {
+        //         Debug.Log("is player move");
+        //         Vector3 position = mTrans.position + GetInputs.playerMoveDirection * mPlayerInfo.MoveSpeed;
+        //         mTrans.position = position;
+        //     }
+        // }
     }
 
 }

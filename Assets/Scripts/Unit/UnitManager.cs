@@ -6,7 +6,8 @@ using UnityEngine;
 namespace Simulator {
     public class UnitManager
     {
-        private static string playerPrefabPath = "Assets/TestAsset/GameResources/prefab/character/songoku_1.prefab";
+        private static string playerPrefabPath = "";
+        // private static string playerPrefabPath = "Assets/TestAsset/GameResources/prefab/character/songoku_1.prefab";
         public void Initialize()
         {
             

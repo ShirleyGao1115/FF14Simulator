@@ -1,85 +1,205 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Simulator.Movement {
+
+    public delegate void OnCameraUpDown(CameraUpDownType udStatus);
+    public delegate void OnCameraRotate(Vector3 rotatePosition);
+    public delegate void OnCameraZooming(float zoomDelta);
+    public delegate void OnCharacterMove(Vector3 moveForward);
 
     public enum CameraUpDownType
     {
         None, Up, Down
     }
 
+    public enum ZoomingStatus
+    {
+        None, In, Out
+    }
+
+    /// <summary>
+    /// MouseSingleDown:only rotate camera
+    /// MouseDoubleDown:camera rotate and char move(direction:camera forward)
+    /// CharMoveCameraRotate:camera rotate and char move(direction:wasd)
+    /// </summary>
+    public enum InputStatus {
+        Default, MouseSingleDown, MouseDoubleDown, OnlyCharMove, CharMoveCameraRotate, CameraUpDown, CameraUpDownTemp
+    }
+
     public class GenericMoveInputs {
-        public bool isPlayerMove;// player move
-        public bool isPlayerAutoMove;
-        public Vector3 playerMoveDirection;
+        static public InputStatus inputStatus = InputStatus.Default;
+        static public ZoomingStatus zoomStatus = ZoomingStatus.None;
+        static public CameraUpDownType cameraUDStatus = CameraUpDownType.None;
 
-        public bool isCameraRotate = false; 
-        public bool isCameraMove;
-        public CameraUpDownType cameraUpDownType = CameraUpDownType.None;
-        public bool isZoomIn;
-        public bool isZoomOut;
+        public event OnCameraUpDown onCameraUpDown;
+        public event OnCameraRotate onCameraRotate;
+        public event OnCameraZooming onCameraZooming;
+        public event OnCharacterMove onCharacterMove;
 
-        public virtual void Initialize() {
-            // RotateActionStart = new Vector2();
+        public GenericMoveCamera cameraCtrl;
+
+        public GameObject mainPlayer;
+        public virtual void Initialize(GameObject aMainPlayerObj) {
+            mainPlayer = aMainPlayerObj;
+            cameraCtrl = new GenericMoveCamera();
+            cameraCtrl.Initialize(mainPlayer);
         }
 
-        public virtual void QueryInputSystem() {
+        public void Start() {
 
-            // isSlowModifier = (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl));
-            // isFastModifier = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
-            // isRotateAction = Input.GetButton("Fire2");
+        }
 
-            // // Get mouse starting point when the button was clicked.
-            // if ( Input.GetButtonDown("Fire2") ) {
-            //     RotateActionStart.x = Input.mousePosition.x;
-            //     RotateActionStart.y = Input.mousePosition.y;
-            // }
-            // isLockForwardMovement = Input.GetButton("Fire3");
-            // ResetMovement = Input.GetKey(KeyCode.Space);
+        public void Update() {
+            updateInputStatus();
 
-            // isPanLeft = Input.GetKey(KeyCode.A);
-            // isPanRight = Input.GetKey(KeyCode.D);
-            // isPanUp = Input.GetKey(KeyCode.Q);
-            // isPanDown = Input.GetKey(KeyCode.Z);
+            Vector3 mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, Input.mousePosition.z);
+            Vector3 moveDir;
+            switch(inputStatus){
+                case InputStatus.Default:
+                    break;
+                case InputStatus.CameraUpDown:
+                    onCameraUpDown?.Invoke(cameraUDStatus);
+                    break;
+                case InputStatus.CameraUpDownTemp:
+                    break;
+                case InputStatus.MouseSingleDown:
+                    onCameraRotate?.Invoke(mousePos);
+                    break;
+                case InputStatus.MouseDoubleDown:
+                    onCameraRotate?.Invoke(mousePos);
+                    Vector3 cameraDir = cameraCtrl.getCameraForwardDir();
+                    onCharacterMove?.Invoke(new Vector3(cameraDir.x, cameraDir.y, cameraDir.z));
+                    break;
+                case InputStatus.OnlyCharMove:
+                    moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
+                    onCharacterMove?.Invoke(moveDir);
+                    break;
+                case InputStatus.CharMoveCameraRotate:
+                    onCameraRotate?.Invoke(mousePos);
+                    moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
+                    onCharacterMove?.Invoke(moveDir);
+                    break;
+                default:
+                    break;
+            }
 
-            // isMoveForward = Input.GetKey(KeyCode.W);
-            // isMoveBackward = Input.GetKey(KeyCode.S);
+            switch(zoomStatus){
+                case ZoomingStatus.In:
+                case ZoomingStatus.Out:
+                    onCameraZooming?.Invoke(Input.mouseScrollDelta.y);
+                    break;
+                case ZoomingStatus.None:
+                default:
+                    break;
+            }
+        }
 
-            isZoomIn = Input.GetAxis("Mouse ScrollWheel") > 0;
-            isZoomOut = Input.GetAxis("Mouse ScrollWheel") < 0;
+        private void updateInputStatus() {
+            // zoom
+            if (Input.mouseScrollDelta.y > 0){
+                zoomStatus = ZoomingStatus.In;
+            }
+            else if(Input.mouseScrollDelta.y < 0){
+                zoomStatus = ZoomingStatus.Out;
+            }
+            else{
+                zoomStatus = ZoomingStatus.None;
+            }
 
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D))
-            {
-                isPlayerMove = true;
-
-                playerMoveDirection = new Vector3(0, 0, 0);
-                if (Input.GetKey(KeyCode.W))
-                    playerMoveDirection.z += 1;
-
-                if (Input.GetKey(KeyCode.S))
-                    playerMoveDirection.z -= 1;
-
-                if (Input.GetKey(KeyCode.A))
-                    playerMoveDirection.x += 1;
-
-                if (Input.GetKey(KeyCode.D))
-                    playerMoveDirection.x -= 1;
+            // input
+            // camera updown
+            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)){
+                if (Input.GetKey(KeyCode.UpArrow)){
+                    inputStatus = InputStatus.CameraUpDown;
+                    cameraUDStatus = CameraUpDownType.Up;
+                }
+                else if(Input.GetKey(KeyCode.DownArrow)){
+                    inputStatus = InputStatus.CameraUpDown;
+                    cameraUDStatus = CameraUpDownType.Down;
+                }
+                else{
+                    inputStatus = InputStatus.CameraUpDownTemp;
+                    cameraUDStatus = CameraUpDownType.None;
+                }
             }
             else
-                isPlayerMove = false;
-
-            if (Input.GetKey(KeyCode.LeftControl) && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
             {
-                if (Input.GetKey(KeyCode.UpArrow))
-                    cameraUpDownType = CameraUpDownType.Up;
+                bool isMouseLeft = Input.GetMouseButton(0);
+                bool isMouseRight = Input.GetMouseButton(1);
+                bool isW = Input.GetKey(KeyCode.W);
+                bool isA = Input.GetKey(KeyCode.A);
+                bool isS = Input.GetKey(KeyCode.S);
+                bool isD = Input.GetKey(KeyCode.D);
+                bool isWASDLegal = true;
+
+                if (isW || isA || isS || isD)
+                {
+                    int pushNum = 0;
+                    if (isW)
+                        pushNum++;
+                    if (isA)
+                        pushNum++;
+                    if (isS)
+                        pushNum++;
+                    if (isD)
+                        pushNum++;
+                    
+                    if (pushNum <= 2)
+                        isWASDLegal = true;
+                    else
+                        isWASDLegal = false;
+
+                    if (isWASDLegal)
+                        if ((isW && isA) || (isS && isD))
+                            isWASDLegal = false;
+                }
+
+                if (isWASDLegal)
+                {
+                    if (!(isMouseLeft || isMouseRight))
+                        inputStatus = InputStatus.OnlyCharMove;// 只按了wasd
+                    else
+                        inputStatus = InputStatus.CharMoveCameraRotate;
+                }
                 else
-                    cameraUpDownType = CameraUpDownType.Down;
+                {
+                    if (isMouseLeft && isMouseRight)
+                        inputStatus = InputStatus.MouseDoubleDown;
+                    else if (!isMouseLeft && !isMouseRight)
+                        inputStatus = InputStatus.Default;
+                    else 
+                        inputStatus = InputStatus.MouseSingleDown;
+                }
             }
-            else
-                cameraUpDownType = CameraUpDownType.None;
-
         }
 
+        private Vector3 getMoveDir(Vector3 cameraDir)
+        {
+            Vector3 kbDir = new Vector3(0, 0, 0);
+            if (Input.GetKey(KeyCode.W))
+                kbDir.z = 1;
+            if (Input.GetKey(KeyCode.S))
+                kbDir.z = -1;
+            if (Input.GetKey(KeyCode.A))
+                kbDir.x = -1;
+            if (Input.GetKey(KeyCode.D))
+                kbDir.x = 1;
+
+            kbDir = kbDir.normalized;
+            kbDir = kbDir + cameraDir;
+            kbDir = kbDir.normalized;
+
+            return kbDir;
+        }
+
+        public void Dispose()
+        {
+            onCameraUpDown = null;
+            onCameraRotate = null;
+            onCharacterMove = null;
+        }
     }
 }

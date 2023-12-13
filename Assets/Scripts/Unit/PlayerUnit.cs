@@ -14,6 +14,9 @@ namespace Simulator {
 
         [SerializeField]
         public float PlayerHeight = 1.0f;
+
+        [SerializeField]
+        public float MoveSpeed = 1.0f;
     }
 
 }

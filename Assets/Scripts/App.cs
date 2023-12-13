@@ -27,12 +27,13 @@ public class App : MonoBehaviour
 
     void Init()
     {
-        Application.targetFrameRate = 60;
-        MoveInputs = new GenericMoveInputs();
-        MoveInputs.Initialize();
         Instance = this;
-
+        Application.targetFrameRate = 60;
         MainPlayer = UnitManager.CreatePlayer("MainPlayer");
+
+        MoveInputs = new GenericMoveInputs();
+        MoveInputs.Initialize(MainPlayer);
+
         Debug.Log($"mainplayer = {MainPlayer != null}");
     }
     
@@ -45,9 +46,11 @@ public class App : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        MoveInputs.Update();
     }
 
-    
+    private void OnDestroy() {
+        MoveInputs.Dispose();
+    }
 }
 
