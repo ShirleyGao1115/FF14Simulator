@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Simulator.Movement {
 
     public delegate void OnCameraUpDown(CameraUpDownType udStatus);
-    public delegate void OnCameraRotate(Vector3 rotatePosition);
+    public delegate void OnCameraRotate(Vector2 rotatePercentage);
     public delegate void OnCameraZooming(float zoomDelta);
     public delegate void OnCharacterMove(Vector3 moveForward);
 
@@ -39,13 +39,11 @@ namespace Simulator.Movement {
         public event OnCameraZooming onCameraZooming;
         public event OnCharacterMove onCharacterMove;
 
-        public GenericMoveCamera cameraCtrl;
-
         public GameObject mainPlayer;
+        public GenericMoveCamera cameraCtrl;
         public virtual void Initialize(GameObject aMainPlayerObj) {
             mainPlayer = aMainPlayerObj;
-            cameraCtrl = new GenericMoveCamera();
-            cameraCtrl.Initialize(mainPlayer);
+            cameraCtrl = App.Instance.CameraCtrl;
         }
 
         public void Start() {
@@ -54,8 +52,7 @@ namespace Simulator.Movement {
 
         public void Update() {
             updateInputStatus();
-
-            Vector3 mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, Input.mousePosition.z);
+            Vector2 mousePer = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
             Vector3 moveDir;
             switch(inputStatus){
                 case InputStatus.Default:
@@ -66,21 +63,21 @@ namespace Simulator.Movement {
                 case InputStatus.CameraUpDownTemp:
                     break;
                 case InputStatus.MouseSingleDown:
-                    onCameraRotate?.Invoke(mousePos);
+                    onCameraRotate?.Invoke(mousePer);
                     break;
                 case InputStatus.MouseDoubleDown:
                     Vector3 cameraDir = cameraCtrl.getCameraForwardDir();
+                    onCameraRotate?.Invoke(mousePer);
                     onCharacterMove?.Invoke(new Vector3(cameraDir.x, cameraDir.y, cameraDir.z));
-                    onCameraRotate?.Invoke(mousePos);
                     break;
                 case InputStatus.OnlyCharMove:
                     moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
                     onCharacterMove?.Invoke(moveDir);
                     break;
                 case InputStatus.CharMoveCameraRotate:
+                    onCameraRotate?.Invoke(mousePer);
                     moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
                     onCharacterMove?.Invoke(moveDir);
-                    onCameraRotate?.Invoke(mousePos);
                     break;
                 default:
                     break;
@@ -133,7 +130,7 @@ namespace Simulator.Movement {
                 bool isA = Input.GetKey(KeyCode.A);
                 bool isS = Input.GetKey(KeyCode.S);
                 bool isD = Input.GetKey(KeyCode.D);
-                bool isWASDLegal = true;
+                bool isWASDLegal = false;
 
                 if (isW || isA || isS || isD)
                 {

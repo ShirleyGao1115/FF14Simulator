@@ -7,17 +7,11 @@ namespace Simulator.Movement
     public class GenericMovePlayer : MonoBehaviour
     {
 
-        public GenericMoveInputs GetInputs;
-
-        public Camera MainCamera;
-
-        public GenericMoveCamera CameraMover;
-
-        private Transform mTrans;
+        public GenericMoveInputs mInputs = App.Instance?.MoveInputs;
 
         private PlayerUnit mPlayerInfo;
 
-        public float Speed = 1.0f;
+        public float Speed = 0.1f;
 
         public void  Awake()
         {
@@ -26,29 +20,34 @@ namespace Simulator.Movement
         // Start is called before the first frame update
         void Start()
         {
-            // if (GetInputs == null)
-            // {
-            //     GetInputs = App.Instance.MoveInputs;
-            // }
-            // mTrans = this.transform;
-
-            // if (mPlayerInfo == null)
-            // {
-            //     mPlayerInfo = mTrans.GetComponent<PlayerUnit>();
-            // }
+            
         }
 
         // Update is called once per frame
-        // void Update()
-        // {
-        //     GetInputs.QueryInputSystem();
-        //     if (GetInputs != null && GetInputs.isPlayerMove)
-        //     {
-        //         Debug.Log("is player move");
-        //         Vector3 position = mTrans.position + GetInputs.playerMoveDirection * mPlayerInfo.MoveSpeed;
-        //         mTrans.position = position;
-        //     }
-        // }
+        void Update()
+        {
+            
+        }
+
+        public void AddDelegate()
+        {
+            if (mInputs == null)
+                mInputs = App.Instance.MoveInputs;
+            
+            mInputs.onCharacterMove += onCharacterMove;
+        }
+
+        public void onCharacterMove(Vector3 moveForward)
+        {
+            Vector3 moveDir = new Vector3(moveForward.x, 0, moveForward.z);
+            Vector3 deltaPos = moveDir * Speed;
+            this.transform.position += deltaPos;
+        }
+
+        public void Disable()
+        {
+            mInputs.onCharacterMove -= onCharacterMove;
+        }
     }
 
 }
