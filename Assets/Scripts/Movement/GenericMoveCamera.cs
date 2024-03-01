@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Simulator.Movement {
-    public class GenericMoveCamera {
+namespace Simulator.Movement
+{
+    public class GenericMoveCamera
+    {
         public GenericMoveInputs mInputs = App.Instance?.MoveInputs;
         private Camera mCamera;
-        public Camera MainCamera{
-            get {
+        public Camera MainCamera
+        {
+            get
+            {
                 if (mCamera == null)
                     mCamera = Camera.main;
                 return mCamera;
@@ -34,7 +38,8 @@ namespace Simulator.Movement {
         private Quaternion rotate;
 
         private float sensitivity = 10f;
-        private float yMinMax = 5f;
+        private float yMin = 0.5f;
+        private float yMax = 4.0f;
 
         public void Initialize(GameObject aMainPlayer)
         {
@@ -90,12 +95,25 @@ namespace Simulator.Movement {
         public void onCameraRotate(Vector2 rotatePercentage)
         {
             float rotateX = rotatePercentage.x * sensitivity;
-            float rotateY = - rotatePercentage.y * 0.2f * sensitivity;
+            float rotateY = -rotatePercentage.y * 0.2f * sensitivity;
             Vector3 pos = rotateAroundPlayer(MainCamera.transform.position, Vector3.up, rotateX);
-            
+
+            Vector3 dir = pos - lookAtTarget.transform.position;
+            dir = dir.normalized;
+            Vector3 normalVector = Vector3.Cross(dir, Vector3.up).normalized;
+
+            pos = rotateAroundPlayer(pos, normalVector, rotateY);
+            if (pos.y < yMin)
+            {
+                pos.y = yMin;
+            }
+            if (pos.y > yMax)
+            {
+                pos.y = yMax;
+            }
+
             MainCamera.transform.position = pos;
             MainCamera.transform.LookAt(lookAtTarget.transform);
-            MainCamera.transform.Rotate(new Vector3(rotateY, 0, 0));
             rotate = MainCamera.transform.rotation;
         }
 
@@ -105,7 +123,7 @@ namespace Simulator.Movement {
             Vector3 center = lookAtTarget.transform.position;
 
             return Quaternion.AngleAxis(angle, axis) * (position - center) + center;
-        } 
+        }
 
         public void Update()
         {

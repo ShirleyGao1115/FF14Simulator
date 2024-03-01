@@ -3,12 +3,15 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Simulator.Movement {
+namespace Simulator.Movement
+{
 
     public delegate void OnCameraUpDown(CameraUpDownType udStatus);
     public delegate void OnCameraRotate(Vector2 rotatePercentage);
     public delegate void OnCameraZooming(float zoomDelta);
     public delegate void OnCharacterMove(Vector3 moveForward);
+    public delegate void onCharacterLookAt(Vector3 forwardDir);
+    public delegate void OnCharacterRotate(Vector2 rotatePercentage);
 
     public enum CameraUpDownType
     {
@@ -25,11 +28,13 @@ namespace Simulator.Movement {
     /// MouseDoubleDown:camera rotate and char move(direction:camera forward)
     /// CharMoveCameraRotate:camera rotate and char move(direction:wasd)
     /// </summary>
-    public enum InputStatus {
+    public enum InputStatus
+    {
         Default, MouseSingleDown, MouseDoubleDown, OnlyCharMove, CharMoveCameraRotate, CameraUpDown, CameraUpDownTemp
     }
 
-    public class GenericMoveInputs {
+    public class GenericMoveInputs
+    {
         static public InputStatus inputStatus = InputStatus.Default;
         static public ZoomingStatus zoomStatus = ZoomingStatus.None;
         static public CameraUpDownType cameraUDStatus = CameraUpDownType.None;
@@ -38,23 +43,28 @@ namespace Simulator.Movement {
         public event OnCameraRotate onCameraRotate;
         public event OnCameraZooming onCameraZooming;
         public event OnCharacterMove onCharacterMove;
+        public event onCharacterLookAt onCharacterLookAt;
 
         public GameObject mainPlayer;
         public GenericMoveCamera cameraCtrl;
-        public virtual void Initialize(GameObject aMainPlayerObj) {
+        public virtual void Initialize(GameObject aMainPlayerObj)
+        {
             mainPlayer = aMainPlayerObj;
             cameraCtrl = App.Instance.CameraCtrl;
         }
 
-        public void Start() {
+        public void Start()
+        {
 
         }
 
-        public void Update() {
+        public void Update()
+        {
             updateInputStatus();
             Vector2 mousePer = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
             Vector3 moveDir;
-            switch(inputStatus){
+            switch (inputStatus)
+            {
                 case InputStatus.Default:
                     break;
                 case InputStatus.CameraUpDown:
@@ -68,7 +78,8 @@ namespace Simulator.Movement {
                 case InputStatus.MouseDoubleDown:
                     Vector3 cameraDir = cameraCtrl.getCameraForwardDir();
                     onCameraRotate?.Invoke(mousePer);
-                    onCharacterMove?.Invoke(new Vector3(cameraDir.x, cameraDir.y, cameraDir.z));
+                    onCharacterLookAt?.Invoke(cameraDir);
+                    onCharacterMove?.Invoke(cameraDir);
                     break;
                 case InputStatus.OnlyCharMove:
                     moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
@@ -77,13 +88,15 @@ namespace Simulator.Movement {
                 case InputStatus.CharMoveCameraRotate:
                     onCameraRotate?.Invoke(mousePer);
                     moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
+                    onCharacterLookAt?.Invoke(moveDir);
                     onCharacterMove?.Invoke(moveDir);
                     break;
                 default:
                     break;
             }
 
-            switch(zoomStatus){
+            switch (zoomStatus)
+            {
                 case ZoomingStatus.In:
                 case ZoomingStatus.Out:
                     onCameraZooming?.Invoke(Input.mouseScrollDelta.y);
@@ -94,30 +107,38 @@ namespace Simulator.Movement {
             }
         }
 
-        private void updateInputStatus() {
+        private void updateInputStatus()
+        {
             // zoom
-            if (Input.mouseScrollDelta.y > 0){
+            if (Input.mouseScrollDelta.y > 0)
+            {
                 zoomStatus = ZoomingStatus.In;
             }
-            else if(Input.mouseScrollDelta.y < 0){
+            else if (Input.mouseScrollDelta.y < 0)
+            {
                 zoomStatus = ZoomingStatus.Out;
             }
-            else{
+            else
+            {
                 zoomStatus = ZoomingStatus.None;
             }
 
             // input
             // camera updown
-            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)){
-                if (Input.GetKey(KeyCode.UpArrow)){
+            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
+            {
+                if (Input.GetKey(KeyCode.UpArrow))
+                {
                     inputStatus = InputStatus.CameraUpDown;
                     cameraUDStatus = CameraUpDownType.Up;
                 }
-                else if(Input.GetKey(KeyCode.DownArrow)){
+                else if (Input.GetKey(KeyCode.DownArrow))
+                {
                     inputStatus = InputStatus.CameraUpDown;
                     cameraUDStatus = CameraUpDownType.Down;
                 }
-                else{
+                else
+                {
                     inputStatus = InputStatus.CameraUpDownTemp;
                     cameraUDStatus = CameraUpDownType.None;
                 }
@@ -143,7 +164,7 @@ namespace Simulator.Movement {
                         pushNum++;
                     if (isD)
                         pushNum++;
-                    
+
                     if (pushNum <= 2)
                         isWASDLegal = true;
                     else
@@ -167,7 +188,7 @@ namespace Simulator.Movement {
                         inputStatus = InputStatus.MouseDoubleDown;
                     else if (!isMouseLeft && !isMouseRight)
                         inputStatus = InputStatus.Default;
-                    else 
+                    else
                         inputStatus = InputStatus.MouseSingleDown;
                 }
             }
