@@ -38,17 +38,17 @@ namespace Simulator.Movement
             mInputs.onCharacterLookAt += onCharacterLookAt;
         }
 
-        public void onCharacterMove(Vector3 moveForward)
+        public void onCharacterMove(float moveForwardAngle)
         {
-            Vector3 moveDir = new Vector3(moveForward.x, 0, moveForward.z);
+            Vector3 moveDir = Quaternion.Euler(0, moveForwardAngle * Mathf.Rad2Deg, 0) * Vector3.forward;
             Vector3 deltaPos = moveDir * Speed;
             this.transform.position += deltaPos;
+            this.onCharacterLookAt(moveForwardAngle);
         }
 
-        public void onCharacterLookAt(Vector3 forwardDir)
+        public void onCharacterLookAt(float moveForwardAngle)
         {
-            // this.transform.forward = new Vector3(forwardDir.x, forwardDir.y, forwardDir.z);
-            this.transform.rotation = Quaternion.LookRotation(forwardDir);
+            this.transform.eulerAngles = new Vector3(0, moveForwardAngle * Mathf.Rad2Deg, 0);
         }
 
         public void Disable()

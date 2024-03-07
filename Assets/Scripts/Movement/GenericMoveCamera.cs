@@ -39,7 +39,7 @@ namespace Simulator.Movement
 
         private float sensitivity = 10f;
         private float yMin = 0.5f;
-        private float yMax = 4.0f;
+        private float yMax = 20.0f;
 
         public void Initialize(GameObject aMainPlayer)
         {

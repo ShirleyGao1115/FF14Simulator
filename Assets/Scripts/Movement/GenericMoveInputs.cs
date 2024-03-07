@@ -9,9 +9,8 @@ namespace Simulator.Movement
     public delegate void OnCameraUpDown(CameraUpDownType udStatus);
     public delegate void OnCameraRotate(Vector2 rotatePercentage);
     public delegate void OnCameraZooming(float zoomDelta);
-    public delegate void OnCharacterMove(Vector3 moveForward);
-    public delegate void onCharacterLookAt(Vector3 forwardDir);
-    public delegate void OnCharacterRotate(Vector2 rotatePercentage);
+    public delegate void OnCharacterMove(float moveForwardAngle);
+    public delegate void onCharacterLookAt(float forwardAngle);
 
     public enum CameraUpDownType
     {
@@ -63,6 +62,7 @@ namespace Simulator.Movement
             updateInputStatus();
             Vector2 mousePer = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
             Vector3 moveDir;
+            float angle;
             switch (inputStatus)
             {
                 case InputStatus.Default:
@@ -76,20 +76,19 @@ namespace Simulator.Movement
                     onCameraRotate?.Invoke(mousePer);
                     break;
                 case InputStatus.MouseDoubleDown:
-                    Vector3 cameraDir = cameraCtrl.getCameraForwardDir();
                     onCameraRotate?.Invoke(mousePer);
-                    onCharacterLookAt?.Invoke(cameraDir);
-                    onCharacterMove?.Invoke(cameraDir);
+                    Vector3 cameraDir = cameraCtrl.getCameraForwardDir();
+                    angle = Mathf.Atan2(cameraDir.x, cameraDir.z);
+                    onCharacterMove?.Invoke(angle);
                     break;
                 case InputStatus.OnlyCharMove:
-                    moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
-                    onCharacterMove?.Invoke(moveDir);
+                    angle = getMoveAngle(cameraCtrl.getCameraForwardDir());
+                    onCharacterMove?.Invoke(angle);
                     break;
                 case InputStatus.CharMoveCameraRotate:
                     onCameraRotate?.Invoke(mousePer);
-                    moveDir = getMoveDir(cameraCtrl.getCameraForwardDir());
-                    onCharacterLookAt?.Invoke(moveDir);
-                    onCharacterMove?.Invoke(moveDir);
+                    angle = getMoveAngle(cameraCtrl.getCameraForwardDir());
+                    onCharacterMove?.Invoke(angle);
                     break;
                 default:
                     break;
@@ -194,8 +193,9 @@ namespace Simulator.Movement
             }
         }
 
-        private Vector3 getMoveDir(Vector3 cameraDir)
+        private float getMoveAngle(Vector3 cameraDir)
         {
+            float cameraAngle = Mathf.Atan2(cameraDir.x, cameraDir.z);
             Vector3 kbDir = new Vector3(0, 0, 0);
             if (Input.GetKey(KeyCode.W))
                 kbDir.z = 1;
@@ -207,10 +207,10 @@ namespace Simulator.Movement
                 kbDir.x = 1;
 
             kbDir = kbDir.normalized;
-            kbDir = kbDir + cameraDir;
-            kbDir = kbDir.normalized;
+            float kbAngle = Mathf.Atan2(kbDir.x, kbDir.z);
+            float angle = cameraAngle + kbAngle;
 
-            return kbDir;
+            return angle;
         }
 
         public void Dispose()

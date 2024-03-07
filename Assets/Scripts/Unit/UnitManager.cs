@@ -7,7 +7,7 @@ namespace Simulator {
     public class UnitManager
     {
         // private static string playerPrefabPath = "";
-        private static string playerPrefabPath = "Assets/Models/MiniFriend.prefab";
+        private static string playerPrefabPath = "Assets/Models/player.prefab";
         public void Initialize()
         {
             
